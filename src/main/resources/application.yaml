@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: k8s
+
+app:
+  file-path: file.txt
