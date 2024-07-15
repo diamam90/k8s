@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s
+      tier: client
+  template:
+    metadata:
+      labels:
+        app: k8s
+        tier: client
+    spec:
+      containers:
+        - name: k8s
+          image: ooandioo/k8s:2.1
+          volumeMounts:
+            - mountPath: /app/folder1/folder2
+              name: k8s-volume
+          env:
+            - name: APP_FILE-PATH
+              value: /app/folder1/folder2/file.log
+      volumes:
+        - name: k8s-volume
+          persistentVolumeClaim:
+            claimName: local-persistent-volume-claim

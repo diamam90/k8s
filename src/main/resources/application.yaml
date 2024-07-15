@@ -3,4 +3,4 @@ spring:
     name: k8s
 
 app:
-  file-path: file.txt
+  file-path: my/folder/file.txt

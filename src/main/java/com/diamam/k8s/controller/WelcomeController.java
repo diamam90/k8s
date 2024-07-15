@@ -1,30 +1,23 @@
 package com.diamam.k8s.controller;
 
+import com.diamam.k8s.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.stream.Stream;
 
-@EnableConfigurationProperties(WelcomeController.AppProperties.class)
 @RequiredArgsConstructor
 @Controller
 public class WelcomeController {
-    private final AppProperties properties;
+
+    private final FileService service;
 
     @GetMapping("/")
     public String toSwagger() {
@@ -44,8 +37,8 @@ public class WelcomeController {
     @GetMapping("/payload")
     @ResponseBody
     public String payload() {
-        try (Stream<String> lines = Files.lines(Paths.get(properties.filePath))) {
-            return lines.reduce("", String::join);
+        try {
+            return service.readFromFile();
         } catch (IOException e) {
             return "";
         }
@@ -57,11 +50,12 @@ public class WelcomeController {
             responses = @ApiResponse(responseCode = "200"))
     @PostMapping("input")
     public String input(@RequestParam String payload) {
-        try (OutputStreamWriter writer = new FileWriter(properties.filePath, true);) {
-            writer.write(payload);
+        try {
+            service.addToFile(payload);
             return "redirect:/payload";
         } catch (IOException e) {
-            return "redirect:/welcome";
+            System.err.println(e.getMessage());
+            return "redirect:/welcome?name=username";
         }
     }
 
@@ -70,17 +64,11 @@ public class WelcomeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/clean")
     public void clean() {
-        try (OutputStreamWriter writer = new FileWriter(properties.getFilePath())) {
-//            writer.write("");
-            writer.flush();
+        try {
+            service.clean();
         } catch (IOException e) {
+            System.err.println(e.getMessage());
         }
     }
 
-    @Data
-//    @Configuration
-    @ConfigurationProperties(prefix = "app")
-    public static class AppProperties {
-        private String filePath;
-    }
 }
